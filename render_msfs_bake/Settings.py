@@ -7,6 +7,14 @@ from bpy.props import BoolProperty, StringProperty, FloatProperty, IntProperty, 
 def check_ob_in_scene(scene: Scene) -> None:
     settings = bpy.context.window_manager.msfs_properties
 
+    # Kake sure we can actually see the object so that baking works
+    if not settings.src_obj.visible_get(view_layer=bpy.context.view_layer):
+        settings.src_obj = None
+
+    if not settings.dst_obj.visible_get(view_layer=bpy.context.view_layer):
+        settings.dst_obj = None
+
+    # Remove deleted objects
     if settings.src_obj is not None:
         if settings.src_obj.name not in scene.objects:
            settings.src_obj = None
@@ -47,7 +55,15 @@ def update_dst(cls, context: Context) -> None:
 
 def filter_objects(cls, object : Object) -> bool:
     # Exclude Lights, Cameras, etc
-    return object.type == "MESH" and object.users > 0
+    if object.type != "MESH":
+        return False
+    
+    # Exclude unlinked objects
+    if object.users == 0:
+        return False
+    
+    # Exclude unchecked view layers
+    return object.visible_get(view_layer=bpy.context.view_layer)
     
 class MSFSBake_Properties(bpy.types.PropertyGroup):
     bl_idname = "msfsbake.settings"

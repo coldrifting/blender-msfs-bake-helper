@@ -52,6 +52,8 @@ def setup_render_settings(context: Context) -> None:
     settings.prev_active = bpy.context.view_layer.objects.active
 
     # Setup
+    bpy.ops.object.mode_set(mode='OBJECT')
+
     render.engine ='CYCLES'
 
     bpy.ops.object.select_all(action='DESELECT')
@@ -93,6 +95,7 @@ def setup_destination(dst_obj: Object, w: int, h: int) -> Image:
         mat = bpy.data.materials.new(name=DST_MATERIAL_NAME)
 
     dst_obj.data.materials.append(mat)
+    dst_obj.active_material = mat
 
     mat.use_nodes = True
     ntree_out = mat.node_tree
