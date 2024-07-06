@@ -5,47 +5,21 @@ from bpy.props import BoolProperty, StringProperty, FloatProperty, IntProperty, 
 
 
 def check_ob_in_scene(scene: Scene) -> None:
-    settings = bpy.context.window_manager.msfs_properties
-
-    # Kake sure we can actually see the object so that baking works
-    if not settings.src_obj.visible_get(view_layer=bpy.context.view_layer):
-        settings.src_obj = None
-
-    if not settings.dst_obj.visible_get(view_layer=bpy.context.view_layer):
-        settings.dst_obj = None
+    # Full paths are important for removing here
+    settings = scene.msfs_properties
 
     # Remove deleted objects
     if settings.src_obj is not None:
-        if settings.src_obj.name not in scene.objects:
+        if not filter_objects(None, settings.src_obj):
            settings.src_obj = None
 
     if settings.dst_obj is not None:
-        if settings.dst_obj.name not in scene.objects:
-            settings.dst_obj = None
+        if not filter_objects(None, settings.dst_obj):
+           settings.dst_obj = None
 
 
-def update_src(cls, context: Context) -> None:
-    settings = context.window_manager.msfs_properties
-
-    # Unhide any hidden objects on unlink
-    if settings.src_obj is not None:
-        settings.prev_src_name = settings.src_obj.name
-    else:
-        obj = context.scene.objects.get(settings.prev_src_name, None)
-        if obj is not None:
-            obj.hide_set(False)
-
-
-def update_dst(cls, context: Context) -> None:
-    settings = context.window_manager.msfs_properties
-
-    # Unhide any hidden objects on unlink
-    if settings.dst_obj is not None:
-        settings.prev_dst_name = settings.dst_obj.name
-    else:
-        obj = context.scene.objects.get(settings.prev_dst_name, None)
-        if obj is not None:
-            obj.hide_set(False)
+def update_file_prefix(_, context: Context) -> None:
+    settings = context.scene.msfs_properties
 
     # Auto switch output file prefix
     if settings.dst_obj is not None:
@@ -53,7 +27,7 @@ def update_dst(cls, context: Context) -> None:
     else:
         settings.output_file_prefix = settings.default_prefix
 
-def filter_objects(cls, object : Object) -> bool:
+def filter_objects(_, object : Object) -> bool:
     # Exclude Lights, Cameras, etc
     if object.type != "MESH":
         return False
@@ -63,9 +37,14 @@ def filter_objects(cls, object : Object) -> bool:
         return False
     
     # Exclude unchecked view layers
-    return object.visible_get(view_layer=bpy.context.view_layer)
+    return object.name in bpy.context.scene.objects and object.visible_get(view_layer=bpy.context.view_layer)
+
+def update_width(_, context: Context) -> None:
+    settings = context.scene.msfs_properties
+    if settings.output_are_dimensions_linked:
+        settings.output_height = settings.output_width
     
-class MSFSBake_Properties(bpy.types.PropertyGroup):
+class MSFSBake_Settings(bpy.types.PropertyGroup):
     bl_idname = "msfsbake.settings"
     bl_label = "Bake selected mesh maps"
     bl_description = "Bakes all selected mesh maps"
@@ -89,13 +68,14 @@ class MSFSBake_Properties(bpy.types.PropertyGroup):
     prev_dst_name: StringProperty(name="Prev Dst Name", default="")
 
     # Initalize Variables
-    src_obj: PointerProperty(type=Object, poll=filter_objects, update=update_src)
-    dst_obj: PointerProperty(type=Object, poll=filter_objects, update=update_dst)
+    src_obj: PointerProperty(name="Source Object", type=Object, poll=filter_objects)
+    dst_obj: PointerProperty(name="Destination Object", type=Object, poll=filter_objects, update=update_file_prefix)
 
     render_ray_dist: FloatProperty(name="Ray Distance", default=0.000, precision=3, min=0.0, step=1, subtype='DISTANCE')
     render_extrusion: FloatProperty(name="Extrusion Distance", default=0.10, precision=2, min=0.0, step=10, subtype='DISTANCE')
+    obj_align: BoolProperty(name="Align Objects", default=True)
 
-    output_width: IntProperty(name="Width", default=default_res, min=min_res, max=max_res)
+    output_width: IntProperty(name="Width", default=default_res, min=min_res, max=max_res, update=update_width)
     output_height: IntProperty(name="Height", default=default_res, min=min_res, max=max_res)
     output_padding: IntProperty(name="Padding", default=default_padding, min=0, max=64)
     output_are_dimensions_linked: BoolProperty(name="Link Dimensions", default=True)

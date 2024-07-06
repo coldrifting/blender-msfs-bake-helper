@@ -3,12 +3,12 @@ from bpy.types import Panel
 class MSFSBake_Panel(Panel):
     bl_idname = "MSFSBAKE_PT_PANEL"
     bl_label = "MSFS Bake Helper"
-    bl_category = "MSFS Bake Helper"
+    bl_category = "Bake Helper"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     def draw(self, context):
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
 
         layout = self.layout
         layout.label(text="Properties:")
@@ -39,6 +39,7 @@ class MSFSBake_Panel(Panel):
         # Bake distance settings
         maincol.prop(settings, "render_ray_dist")
         maincol.prop(settings, "render_extrusion")
+        maincol.prop(settings, "obj_align", text="Origin Alignment", toggle=True)
         maincol.separator()
 
         # Bake dimensions and padding
@@ -51,7 +52,6 @@ class MSFSBake_Panel(Panel):
         resboxwidtharea.operator("view3d.width_plus", text="", icon="ADD")
         resboxheightarea = resboxcol.row(align=True)
         if settings.output_are_dimensions_linked:
-            settings.output_height = settings.output_width
             resboxheightarea.enabled = False
         else:
             resboxheightarea.enabled = True

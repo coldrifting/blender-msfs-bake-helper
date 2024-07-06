@@ -2,18 +2,18 @@ import bpy
 from bpy.types import Operator, Context, Object
 
 def get_high(context: Context) -> Object:
-    settings = context.window_manager.msfs_properties
+    settings = context.scene.msfs_properties
     return settings.src_obj
 
 
 def get_low(context: Context) -> Object:
-    settings = context.window_manager.msfs_properties
+    settings = context.scene.msfs_properties
     return settings.dst_obj
 
 
 def prev_pow_of_two(val) -> int:
     newVal = 1 << (val.bit_length() - 1)
-    if newVal == val and newVal > bpy.context.window_manager.msfs_properties.min_res:
+    if newVal == val and newVal > bpy.context.scene.msfs_properties.min_res:
         newVal = newVal >> 1
 
     return newVal
@@ -21,7 +21,7 @@ def prev_pow_of_two(val) -> int:
 
 def next_pow_of_two(val) -> int:
     newVal = 1 << val.bit_length()
-    if newVal == val and newVal < bpy.context.window_manager.msfs_properties.max_res:
+    if newVal == val and newVal < bpy.context.scene.msfs_properties.max_res:
         newVal = newVal << 1
 
     return newVal
@@ -82,7 +82,7 @@ class MSFSBake_ToggleWidthLock(Operator):
     bl_description = "Toggles linking width to height for output image"
 
     def execute(self, context: Context) -> None:
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
         settings.output_are_dimensions_linked = not settings.output_are_dimensions_linked
         settings.output_height = settings.output_width
         return {'FINISHED'}
@@ -94,7 +94,7 @@ class MSFSBake_WidthMinus(Operator):
     bl_description = "Reduces width of output image to next smallest power of two"
     
     def execute(self, context: Context) -> None:
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
         settings.output_width = prev_pow_of_two(settings.output_width)
         if settings.output_are_dimensions_linked:
             settings.output_height = settings.output_width
@@ -107,7 +107,7 @@ class MSFSBake_WidthPlus(Operator):
     bl_description = "Increases width of output image to next largest power of two"
     
     def execute(self, context: Context) -> None:
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
         settings.output_width = next_pow_of_two(settings.output_width)
         if settings.output_are_dimensions_linked:
             settings.output_height = settings.output_width
@@ -120,7 +120,7 @@ class MSFSBake_HeightMinus(Operator):
     bl_description = "Reduces Height of output image to next smallest power of two"
     
     def execute(self, context: Context) -> None:
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
         settings.output_height = prev_pow_of_two(settings.output_height)
         return {'FINISHED'}
     
@@ -131,6 +131,6 @@ class MSFSBake_HeightPlus(Operator):
     bl_description = "Increases Height of output image to next largest power of two"
     
     def execute(self, context: Context) -> None:
-        settings = context.window_manager.msfs_properties
+        settings = context.scene.msfs_properties
         settings.output_height = next_pow_of_two(settings.output_height)
         return {'FINISHED'}

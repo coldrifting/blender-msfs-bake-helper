@@ -1,6 +1,6 @@
 import bpy
 
-from .Settings import MSFSBake_Properties
+from .Settings import MSFSBake_Settings
 from .Bake import MSFSBake_Bake
 from .Panel import MSFSBake_Panel
 from .PanelUtils import (
@@ -27,7 +27,7 @@ bl_info = {
 
 
 classes = (
-        MSFSBake_Properties,
+        MSFSBake_Settings,
         MSFSBake_Bake,
         MSFSBake_Panel,
         MSFSBake_ToggleObjVisHigh,
@@ -45,10 +45,10 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.WindowManager.msfs_properties = bpy.props.PointerProperty(type=MSFSBake_Properties)
+    bpy.types.Scene.msfs_properties = bpy.props.PointerProperty(type=MSFSBake_Settings)
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-    del bpy.types.WindowManager.msfs_properties
+    del bpy.types.Scene.msfs_properties
