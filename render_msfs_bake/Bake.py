@@ -10,6 +10,20 @@ SRC_MATERIAL_NAME = "MSFSBake_Input_Material"
 DST_MATERIAL_NAME = "MSFSBake_Output_Material"
 DST_TEXTURE_NAME  = "MSFSBake_Output_Texture"
 
+def apply_modifiers(obj):
+    ctx = bpy.context.copy()
+    ctx['object'] = obj
+    for _, m in enumerate(obj.modifiers):
+        try:
+            ctx['modifier'] = m
+            bpy.ops.object.modifier_apply(ctx, modifier=m.name)
+        except RuntimeError:
+            print(f"Error applying {m.name} to {obj.name}, removing it instead.")
+            obj.modifiers.remove(m)
+
+    for m in obj.modifiers:
+        obj.modifiers.remove(m)
+
 class MSFSBake_Bake(bpy.types.Operator):
     bl_idname = "msfsbake.bake"
     bl_label = "Bake selected mesh maps"
@@ -71,6 +85,11 @@ class MSFSBake_Bake(bpy.types.Operator):
         src.name = SRC_OBJ_NAME
         src.hide_render = False
 
+        bpy.context.view_layer.layer_collection.collection.objects.link(src)
+
+        apply_modifiers(src)
+
+
         # Setup high poly material
         src_mat = bpy.data.materials.new(name=SRC_MATERIAL_NAME)
         src_mat.use_nodes = True
@@ -86,6 +105,10 @@ class MSFSBake_Bake(bpy.types.Operator):
         dst.name = DST_OBJ_NAME
         dst.hide_render = False
 
+        bpy.context.view_layer.layer_collection.collection.objects.link(dst)
+
+        apply_modifiers(dst)
+    
         # Setup low poly material
         dst_mat = bpy.data.materials.new(name=DST_MATERIAL_NAME)
         dst.data.materials.clear()
@@ -98,10 +121,6 @@ class MSFSBake_Bake(bpy.types.Operator):
         dst_output_node.image = bpy.data.images.new(DST_TEXTURE_NAME, width=settings.output_width, height=settings.output_height)
         dst_output_node.select = True
         ntree_out.nodes.active = dst_output_node
-        
-        # Bake
-        bpy.context.view_layer.layer_collection.collection.objects.link(src)
-        bpy.context.view_layer.layer_collection.collection.objects.link(dst)
 
         # Adjust position
         if settings.obj_align:
